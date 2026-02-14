@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Кодови Имена - Мултиплейър</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow: hidden; 
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        
+        .chat-msg { animation: slideIn 0.2s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .role-btn-taken { cursor: not-allowed; opacity: 0.7; }
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="h-screen overflow-hidden text-slate-200">
+    <div id="custom-alert" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+        <div class="bg-slate-800 border border-slate-700 p-6 rounded-3xl shadow-2xl max-w-sm w-full mx-4 transform transition-all">
+            <div id="alert-icon-container" class="w-14 h-14 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center mb-4 text-2xl">
+                <i id="alert-icon" class="fas fa-info-circle"></i>
+            </div>
+            <h3 id="alert-title" class="text-xl font-bold mb-2">Известие</h3>
+            <p id="alert-message" class="text-slate-400 text-sm mb-6 leading-relaxed"></p>
+            <button id="alert-close" class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-xl font-bold transition-all shadow-lg active:scale-95">РАЗБРАХ</button>
+        </div>
+    </div>
+
+    <div id="app-container" class="h-full flex flex-col max-w-7xl mx-auto p-2 sm:p-4">
+        <div id="main-content" class="flex-1 flex flex-col h-full overflow-hidden">
+            <div id="setup-screen" class="flex items-center justify-center min-h-[80vh]">
+                <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl text-center">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                    <p class="text-xl font-bold text-blue-400">Свързване с AI...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <template id="lobby-template">
+        <div class="flex flex-col h-full gap-4 animate-in fade-in duration-300">
+            <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 shadow-xl max-w-4xl mx-auto w-full overflow-y-auto custom-scrollbar">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="bg-blue-600 p-4 rounded-2xl shadow-lg shadow-blue-900/40">
+                        <i class="fas fa-brain text-3xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight">AI Кодови Имена</h1>
+                        <p class="text-slate-400 text-xs uppercase tracking-widest font-bold">Multiplayer Edition</p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Вашето име</label>
+                        <input id="player-name" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-100" placeholder="Въведете име...">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-700/50">
+                            <h3 class="font-bold mb-4 text-blue-400 text-sm border-b border-slate-700 pb-2 uppercase tracking-wide">СЪЗДАЙ СТАЯ</h3>
+                            <input id="room-name" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm mb-3" placeholder="Име на стая">
+                            <input id="room-pass" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm mb-3" placeholder="Парола (по желание)">
+                            
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Брой отбори</label>
+                            <div class="flex gap-2 mb-4">
+                                <button class="team-opt-btn flex-1 py-2 rounded-lg border-2 border-slate-700 bg-slate-800 text-xs transition-all" data-value="2">2</button>
+                                <button class="team-opt-btn flex-1 py-2 rounded-lg border-2 border-slate-700 bg-slate-800 text-xs transition-all" data-value="3">3</button>
+                                <button class="team-opt-btn flex-1 py-2 rounded-lg border-2 border-slate-700 bg-slate-800 text-xs transition-all" data-value="4">4</button>
+                            </div>
+
+                            <button id="create-room-btn" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition-all shadow-lg text-sm">СЪЗДАЙ</button>
+                        </div>
+                        
+                        <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-700/50 flex flex-col">
+                            <h3 class="font-bold mb-4 text-emerald-400 text-sm border-b border-slate-700 pb-2 uppercase tracking-wide">АКТИВНИ СТАИ</h3>
+                            <div id="rooms-list" class="flex-1 space-y-2 h-48 overflow-y-auto custom-scrollbar pr-2">
+                                <p class="text-[10px] text-slate-500 italic text-center py-4">Търсене...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-700">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">AI Тематика за думите</label>
+                        <input id="ai-theme" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-blue-500" placeholder="Напр: Космос, Митология, Готварство...">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="role-selection-template">
+        <div class="flex flex-col items-center justify-center h-full animate-in fade-in">
+            <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl w-full max-w-6xl text-center">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="room-title" class="text-2xl font-bold text-blue-400">Стая</h2>
+                    <div class="text-[10px] bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full border border-blue-500/30 uppercase font-bold">Избор на роли</div>
+                </div>
+                
+                <div id="teams-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                    <!-- Python populated grid -->
+                </div>
+                
+                <div class="flex justify-center gap-4">
+                    <button id="back-to-lobby" class="px-8 py-3.5 rounded-xl bg-slate-700 hover:bg-slate-600 font-bold transition-all text-sm">КЪМ ЛОБИТО</button>
+                    <button id="start-game-btn" class="px-12 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold transition-all hidden text-sm shadow-xl shadow-blue-900/30"></button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.run/@google/genai"
+      }
+    }
+    </script>
+    <script type="module">
+        import { GoogleGenAI } from "@google/genai";
+        window.GoogleGenAI = GoogleGenAI;
+        
+        window.callGemini = async function(prompt) {
+            try {
+                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+                const response = await ai.models.generateContent({
+                    model: 'gemini-3-flash-preview',
+                    contents: prompt,
+                    config: { 
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: { type: "STRING" }
+                        }
+                    }
+                });
+                return response.text;
+            } catch (e) {
+                console.error("Gemini Error:", e);
+                return null;
+            }
+        };
+    </script>
+    
+    <script>
+        window.addEventListener('storage', () => { 
+            if (window.gameManager) window.gameManager.sync_from_storage(); 
+        });
+    </script>
+    <script type="py" src="./main.py" config="./pyscript.json"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
